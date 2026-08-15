@@ -13,22 +13,24 @@ COLLECTION_NAME = "mcp_rag_collection"
 DATA_DIR = "./papers"
 
 def init_chromadb():
-    client = chromadb.PersistentClient(path="./chroma_db")
-    collections = client.get_or_create_collection(name="mcp_rag_collection")    
+    client = chromadb.PersistentClient(path=PERSISTENCE_DIR)
+    collection = client.get_or_create_collection(name=COLLECTION_NAME)   
+    return collection 
 
 def get_chromadb_client():
-    return chromadb.PersistentClient(path="./chroma_db")
+    return chromadb.PersistentClient(path=PERSISTENCE_DIR)
 
-def ingest_data_directory():
+def ingest_data_directory(llama_cloud_api_key, collection_name, data_dir):
     chroma_client = get_chromadb_client()
-    collection = chroma_client.get_collection(name=COLLECTION_NAME)
+    collection = chroma_client.get_collection(name=collection_name)
 
-    parser = LlamaParse(api_key=os.getenv("LLAMA_CLOUD_API_KEY"), api_url=os.getenv("LLAMA_CLOUD_API_URL"), result_type="text")
+    parser = LlamaParse(api_key=llama_cloud_api_key, result_type="text")
     
     file_extractor = {
-        ".pdf": parser
+        ".pdf": parser,
+        ".docx": parser,
         }
-    documents = SimpleDirectoryReader(DATA_DIR, file_extractor=file_extractor).load_data()
+    documents = SimpleDirectoryReader(data_dir, file_extractor=file_extractor).load_data()
 
     return documents
 
@@ -38,7 +40,7 @@ def main():
     LLAMA_CLOUD_API_KEY = os.getenv("LLAMA_CLOUD_API_KEY")
     print("Hello from chromadb!")
 
-    documents = ingest_data_directory()
+    documents = ingest_data_directory(LLAMA_CLOUD_API_KEY, COLLECTION_NAME, DATA_DIR)
     print(f"Ingested {len(documents)} documents.")
 
 
