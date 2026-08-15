@@ -57,16 +57,37 @@ def query_documents(query: str, n_results: int = 2, collection_name: str = COLLE
         include=["documents", "metadatas", "distances"]
     )
 
-    return results
+    if len(results["documents"]) == 0 or not results["documents"][0]:
+        return "No documents found."
 
+    # Format the results for better readability
+    formatted_results = []
+    documents = results["documents"][0]
+    metadatas = results["metadatas"][0] if results["metadatas"] else [{}] * len(documents)
+    distances = results["distances"][0] if results["distances"] else [0] * len(documents)
+
+    for i, (doc, metadata, distance) in enumerate(zip(documents, metadatas, distances)):
+        result_text = f"-- Result {i + 1} --\n"
+        result_text += f"Document content: {doc}\n"
+        result_text += f"Metadata: {metadata}\n"
+        result_text += f"Distance: {distance}\n"
+        formatted_results.append(result_text)
+
+    response = f"FOund {len(formatted_results)} results for query: '{query}'\n\n" + "\n".join(formatted_results) 
+    response += "\n".join(formatted_results) 
+
+    return response
 def main():
     init_chromadb()
 
     LLAMA_CLOUD_API_KEY = os.getenv("LLAMA_CLOUD_API_KEY")
-    print("Hello from chromadb!")
+    print("Initialized ChromaDB and LlamaParse API Key!..")
 
     documents = ingest_data_directory(LLAMA_CLOUD_API_KEY, COLLECTION_NAME, DATA_DIR)
     print(f"Ingested {len(documents)} documents.")
+
+    response = query_documents("What is TradingAgents?", n_results=2, collection_name=COLLECTION_NAME)
+    print(response)
 
 
 if __name__ == "__main__":
