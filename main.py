@@ -35,6 +35,7 @@ def ingest_data_directory(llama_cloud_api_key, collection_name, data_dir):
     documents = SimpleDirectoryReader(data_dir, file_extractor=file_extractor).load_data()
 
     # Added documents to chromadb vector database
+    # Note: We did not use an embedding model here, chromadb will use the default embedding model to generate embeddings for the documents
     for doc in documents:
         collection.add(
             documents=[doc.text],
@@ -45,6 +46,18 @@ def ingest_data_directory(llama_cloud_api_key, collection_name, data_dir):
     final_count = collection.count()
     print(f"Final document count in collection '{collection_name}': {final_count}")
     return documents
+
+def query_documents(query: str, n_results: int = 2, collection_name: str = COLLECTION_NAME) -> str:
+    chroma_client = get_chromadb_client()
+    collection = chroma_client.get_collection(name=collection_name)
+
+    results = collection.query(
+        query_texts=[query],
+        n_results=n_results,
+        include=["documents", "metadatas", "distances"]
+    )
+
+    return results
 
 def main():
     init_chromadb()
