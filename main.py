@@ -25,13 +25,24 @@ def ingest_data_directory(llama_cloud_api_key, collection_name, data_dir):
     collection = chroma_client.get_collection(name=collection_name)
 
     parser = LlamaParse(api_key=llama_cloud_api_key, result_type="text")
-    
+
+    # The file extracter accepts pdf and docx files, and uses the LlamaParse parser to extract text from them
     file_extractor = {
         ".pdf": parser,
         ".docx": parser,
         }
     documents = SimpleDirectoryReader(data_dir, file_extractor=file_extractor).load_data()
 
+    # Added documents to chromadb vector database
+    for doc in documents:
+        collection.add(
+            documents=[doc.text],
+            metadatas=[doc.metadata],
+            ids=[doc.doc_id]
+        )
+
+    final_count = collection.count()
+    print(f"Final document count in collection '{collection_name}': {final_count}")
     return documents
 
 def main():
