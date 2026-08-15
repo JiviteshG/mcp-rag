@@ -22,7 +22,8 @@ def get_chromadb_client():
 
 def ingest_data_directory(llama_cloud_api_key, collection_name, data_dir):
     chroma_client = get_chromadb_client()
-    collection = chroma_client.get_collection(name=collection_name)
+    chroma_client.delete_collection(name=collection_name)  # Delete the collection if it exists
+    collection = chroma_client.get_or_create_collection(name=collection_name)
 
     parser = LlamaParse(api_key=llama_cloud_api_key, result_type="text")
 
